@@ -1,0 +1,76 @@
+#Script para limpiar y unir el scrapping de los articulos celulares y computadores.
+CREATE TABLE `nueva_tabla` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name_product` varchar(255) DEFAULT NULL,
+  `price_product` decimal(10,2) DEFAULT NULL,
+  `link_product` varchar(255) DEFAULT NULL,
+  `marca` varchar(255) DEFAULT NULL,
+  `description_product` varchar(255) DEFAULT NULL,
+  `color_product` varchar(255) DEFAULT NULL,
+  `condicion` varchar(255) DEFAULT NULL,
+  `images` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=219 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO nueva_tabla (name_product, price_product, link_product, marca, description_product, color_product, condicion, images)
+SELECT name_product, price_product, link_product,
+CASE
+  WHEN SUBSTRING_INDEX(name_product, ' ', 1) IN ('Computador', 'Portatil', 'Computadora') THEN CONCAT(SUBSTRING_INDEX(name_product, ' ', 3), ' ', SUBSTRING_INDEX(name_product, ' ', 4))
+  ELSE SUBSTRING_INDEX(name_product, ' ', 2)
+END AS marca,
+description_product, color_product, condicion, images
+FROM computadores;
+
+UPDATE nueva_tabla
+SET marca = CONCAT_WS(' ', SUBSTRING_INDEX(marca, ' ', 1), '', SUBSTRING(marca, LOCATE(' ', marca)+1))
+WHERE marca IN (
+  SELECT marca
+  FROM (
+    SELECT marca, COUNT(*) AS cnt
+    FROM nueva_tabla
+    GROUP BY marca
+    HAVING cnt > 1
+  ) AS t
+);
+
+
+UPDATE nueva_tabla
+SET marca = REPLACE(REPLACE(REPLACE(marca, 'Computador Portatil', ''), 'Portátil Computador', ''), 'Computador Portátil', '')
+WHERE marca LIKE '%Computador%' OR marca LIKE '%Portatil%' OR marca LIKE '%Portátil%';
+
+UPDATE nueva_tabla
+SET marca = REPLACE(marca, ' Lenovo ', '')
+WHERE marca LIKE '% Hp %' 
+   OR marca LIKE '% Lenovo %'
+   OR marca LIKE '% Dell %';
+  
+  UPDATE nueva_tabla
+SET marca = REPLACE(marca, ' Lenovo ', '')
+WHERE marca LIKE '% Hp %' 
+   OR marca LIKE '% Lenovo %'
+   OR marca LIKE '% Dell %';
+  
+  UPDATE nueva_tabla
+SET marca = REPLACE(marca, ' Dell ', '')
+WHERE marca LIKE '% Hp %' 
+   OR marca LIKE '% Lenovo %'
+   OR marca LIKE '% Dell %';
+  
+UPDATE nueva_tabla
+SET marca = REPLACE(marca, ' ', '')
+WHERE marca LIKE '% Hp %' 
+   OR marca LIKE '% Lenovo %'
+   OR marca LIKE '% Dell %';
+  
+  UPDATE nueva_tabla
+SET marca = LTRIM(marca);
+
+drop table nueva_tabla; 
+select  * from nueva_tabla;
+
+CREATE TABLE tabla_union AS
+SELECT * FROM nueva_tabla
+UNION
+SELECT * FROM celulares;
+
+select * from tabla_union;
